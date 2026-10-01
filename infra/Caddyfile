@@ -1,0 +1,26 @@
+{$DOMAIN} {
+  encode zstd gzip
+
+  @api path /api/*
+  handle @api {
+    reverse_proxy api:8000
+  }
+
+  @tiles path /tiles/*
+  handle @tiles {
+    uri strip_prefix /tiles
+    reverse_proxy martin:3000
+  }
+
+  @raster path /raster/*
+  handle @raster {
+    uri strip_prefix /raster
+    reverse_proxy titiler:8000
+  }
+
+  handle {
+    root * /srv/app
+    try_files {path} /index.html
+    file_server
+  }
+}
