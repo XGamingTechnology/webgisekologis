@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>WebGIS Survei Habitat & Satwa — Kota Yogyakarta</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQ3ynZsohZyMGUoaS2ZKf3R0v+0Hh7U=" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>WebGIS Survei Habitat & Satwa</h1>
+      <p>Kota Yogyakarta — dukungan navigasi dan verifikasi lapangan</p>
+    </div>
+    <button id="locateBtn" class="primary">📍 Lokasi saya</button>
+  </header>
+
+  <main>
+    <aside id="sidebar">
+      <section class="card">
+        <h2>Ringkasan</h2>
+        <div class="stats">
+          <div><span id="statTotal">–</span><small>Titik</small></div>
+          <div><span id="statA">–</span><small>Access A</small></div>
+          <div><span id="statB">–</span><small>Access B</small></div>
+          <div><span id="statC">–</span><small>Access C</small></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Cari titik</h2>
+        <input id="searchSite" type="search" placeholder="Contoh: SITE-001" />
+      </section>
+
+      <section class="card">
+        <h2>Filter</h2>
+        <label>HSI
+          <select id="filterHSI">
+            <option value="">Semua</option>
+            <option>High</option>
+            <option>Moderate</option>
+            <option>Low</option>
+          </select>
+        </label>
+        <label>Fungsi survei
+          <select id="filterFunction">
+            <option value="">Semua</option>
+            <option>Confirmatory presence</option>
+            <option>Change verification</option>
+            <option>Candidate non-detection</option>
+            <option>Exploratory high-potential</option>
+          </select>
+        </label>
+        <label>Akses
+          <select id="filterAccess">
+            <option value="">Semua</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+          </select>
+        </label>
+        <button id="resetFilters">Reset filter</button>
+      </section>
+
+      <section class="card">
+        <h2>Layer</h2>
+        <label class="check"><input id="toggleSites" type="checkbox" checked /> Titik survei final</label>
+        <label class="check"><input id="toggleAOI" type="checkbox" checked /> Batas AOI</label>
+        <label class="check"><input id="toggleRoads" type="checkbox" checked /> Jaringan jalan</label>
+        <label class="check"><input id="toggleOccurrence" type="checkbox" /> Observasi historis</label>
+        <label class="check"><input id="toggleHSI" type="checkbox" /> Kelas HSI</label>
+        <label class="check"><input id="toggleChange" type="checkbox" /> Perubahan habitat</label>
+      </section>
+
+      <section class="card">
+        <h2>Catatan lapangan</h2>
+        <p class="muted">Status dan catatan disimpan lokal pada perangkat/browser ini.</p>
+        <button id="exportNotes">Export catatan CSV</button>
+        <button id="clearNotes" class="danger-light">Hapus catatan lokal</button>
+      </section>
+
+      <section class="card small">
+        <strong>Status teknis</strong>
+        <p>Lokasi ekologis terkunci; perubahan titik hanya melalui review akses, izin, dan keselamatan.</p>
+      </section>
+    </aside>
+
+    <section id="mapWrap">
+      <div id="map"></div>
+      <button id="sidebarToggle" aria-label="Toggle panel">☰</button>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

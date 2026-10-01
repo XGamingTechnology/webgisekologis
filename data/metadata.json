@@ -1,0 +1,11 @@
+{
+  "generated_from": {
+    "final_v3": "/content/drive/MyDrive/GIS_Deliverable1/output/LULC_Survey_Redesign_V3/Final_Survey_Sites_Revised_V3.gpkg",
+    "access_review": "/content/drive/MyDrive/GIS_Deliverable1/output/Field_Accessibility/Final_Ecological_Sites_Access_Review.gpkg",
+    "roads": "/content/drive/MyDrive/GIS_Deliverable1/output/Field_Accessibility/Road_Network_Operational.gpkg",
+    "aoi": "/content/drive/MyDrive/GIS_Deliverable1/data/aoi/AOI.shp"
+  },
+  "sites": 30,
+  "crs_web": "EPSG:4326",
+  "note": "Ecological site design locked; operational review only."
+}
