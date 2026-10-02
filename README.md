@@ -1,41 +1,71 @@
-# Field WebGIS — Kajian Habitat & Satwa Perkotaan Kota Yogyakarta
+# WebGIS Ekologis — Kota Yogyakarta
 
-WebGIS statis berbasis Leaflet untuk mendukung reconnaissance dan survei lapangan.
+Aplikasi lapangan untuk Kajian Habitat dan Strategi Konservasi Satwa Perkotaan Kota Yogyakarta.
 
-## Fungsi utama
-- menampilkan titik survei final;
-- filter HSI, fungsi survei, dan kelas akses;
-- menampilkan AOI, jalan, observasi historis, HSI, dan perubahan habitat bila layer tersedia;
-- lokasi perangkat (GPS browser);
-- tombol navigasi ke Google Maps;
-- catatan lapangan lokal per Site_ID;
-- export catatan lapangan ke CSV.
+## Arsitektur
 
-## Deploy
-Folder ini bisa di-host langsung melalui GitHub Pages, Netlify, Cloudflare Pages, atau web server statis.
+- **MapLibre GL JS** — frontend peta.
+- **PostGIS** — master vector dan observasi lapangan.
+- **Martin** — vector tiles MVT dari PostGIS.
+- **TiTiler** — raster/COG HSI, LULC, NDVI, dan habitat change.
+- **FastAPI** — endpoint titik survei dan pencatatan hasil lapangan.
+- **Caddy** — HTTPS dan reverse proxy.
 
-Jangan membuka `index.html` langsung dengan `file://` jika browser memblokir `fetch`.
-Gunakan web server lokal, misalnya:
+Desain ekologis tidak dihitung ulang di aplikasi. WebGIS hanya mengonsumsi hasil final workflow analisis.
 
-```bash
-python -m http.server 8000
+## Data final
+
+Sumber yang disarankan adalah output **Notebook 06 — Final GIS Package**. Salin/ekstrak paket ke:
+
+```text
+data/import/
+└── YYYYMMDD_FINAL_GIS_PACKAGE_D1/
 ```
 
-lalu buka `http://localhost:8000`.
+Raster besar yang akan disajikan melalui TiTiler ditempatkan sebagai COG pada:
 
-## Data minimum
-Wajib:
-- `data/sites.geojson`
+```text
+data/rasters/
+```
 
-Opsional:
-- `data/aoi.geojson`
-- `data/roads.geojson`
-- `data/occurrence.geojson`
-- `data/hsi_classes.geojson`
-- `data/habitat_change.geojson`
+GeoJSON di repo hanya berfungsi sebagai fallback saat PostGIS/Martin belum tersedia.
 
-Gunakan `05_BUILD_FIELD_WEBGIS.ipynb` untuk mengekspor layer dari Google Drive ke struktur ini.
+## Deploy VPS
 
-## Catatan penting
-Layer akses adalah layer operasional, bukan komponen penilaian ekologis HSI.
-Status no-historical-record bukan true absence. Hasil lapangan harus mencatat effort dan deteksi/non-detection.
+```bash
+cp .env.example .env
+# edit DOMAIN + password
+docker compose up -d --build
+docker compose run --rm api python import_gis.py /data/import
+docker compose restart martin api
+curl https://YOUR_DOMAIN/api/health
+```
+
+Setelah import, `/api/sites` membaca `gis.final_sites`. Martin otomatis mengekspos tabel spasial PostGIS sebagai sumber vector tile.
+
+## Layer PostGIS
+
+Importer mengenali produk Notebook 06 berikut:
+
+- AOI_Kota_Yogyakarta.gpkg → `gis.aoi`
+- HSI_Class_Final_Vector.gpkg → `gis.hsi_class`
+- Species_Occurrence_Clean_All.gpkg → `gis.species_occurrence`
+- Integrated_Habitat_Change_Vector.gpkg → `gis.habitat_change`
+- Integrated_Candidate_Pool.gpkg → `gis.candidate_pool`
+- Final_Ecological_Survey_Sites.gpkg → `gis.final_ecological_sites`
+- Final_Sites_Access_Review.gpkg → `gis.final_sites`
+- Road_Network_Operational.gpkg → `gis.roads`
+- Replacement_Candidates_Access.gpkg → `gis.replacement_candidates`
+
+## Prinsip metodologis
+
+- HSI tetap baseline ekologis yang sudah dikunci.
+- layer jalan pada WebGIS adalah akses operasional, bukan bobot ekologis baru.
+- `NO_HISTORICAL_RECORD` bukan true absence.
+- perubahan site di lapangan harus terdokumentasi melalui review akses, izin, keselamatan, dan replacement candidate.
+
+## Development
+
+Branch implementasi aktif: `feat/vps-maplibre-stack`.
+
+Frontend mencoba API/PostGIS terlebih dahulu. Jika backend belum aktif, aplikasi tetap dapat membuka `data/sites.geojson` dan layer GeoJSON fallback.
