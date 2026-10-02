@@ -21,9 +21,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-webgis}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-webgis}
-    command: ["--listen-addresses", "0.0.0.0:3000", "${DATABASE_URL}"]
+    command:
+      - "--listen-addresses"
+      - "0.0.0.0:3000"
+      - "postgresql://${POSTGRES_USER:-webgis}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-webgis}"
 
   api:
     build: ./backend
@@ -35,11 +36,12 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-webgis}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-webgis}
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
     volumes:
-      - ./data:/data:ro
+      - ./data:/data
 
   titiler:
-    image: ghcr.io/developmentseed/titiler:latest
+    image: ghcr.io/developmentseed/titiler:2.4.0
     restart: unless-stopped
+    command: ["uvicorn","titiler.application.main:app","--host","0.0.0.0","--port","8000","--workers","1"]
     volumes:
       - ./data/rasters:/data/rasters:ro
 
