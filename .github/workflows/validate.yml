@@ -1,0 +1,30 @@
+name: Validate WebGIS
+
+on:
+  pull_request:
+  push:
+    branches: [main, "feat/**"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check config.js
+
+      - name: Check Python syntax
+        run: |
+          python -m py_compile backend/main.py backend/import_gis.py
+
+      - name: Validate Docker Compose
+        env:
+          DOMAIN: gis.example.com
+          POSTGRES_DB: webgis
+          POSTGRES_USER: webgis
+          POSTGRES_PASSWORD: ci_only_password
+          CORS_ORIGINS: https://gis.example.com
+        run: docker compose config --quiet

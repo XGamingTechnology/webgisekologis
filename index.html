@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
   <title>WebGIS Survei Habitat & Satwa — Kota Yogyakarta</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIINfQ3ynZsohZyMGUoaS2ZKf3R0v+0Hh7U=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <div>
       <h1>WebGIS Survei Habitat & Satwa</h1>
-      <p>Kota Yogyakarta — dukungan navigasi dan verifikasi lapangan</p>
+      <p>Kota Yogyakarta — navigasi, verifikasi akses, dan pencatatan lapangan</p>
     </div>
     <button id="locateBtn" class="primary">📍 Lokasi saya</button>
   </header>
@@ -28,11 +27,12 @@
           <div><span id="statB">–</span><small>Access B</small></div>
           <div><span id="statC">–</span><small>Access C</small></div>
         </div>
+        <p id="dataMode" class="muted">Memuat sumber data…</p>
       </section>
 
       <section class="card">
         <h2>Cari titik</h2>
-        <input id="searchSite" type="search" placeholder="Contoh: SITE-001" />
+        <input id="searchSite" type="search" placeholder="Contoh: V3-001" />
       </section>
 
       <section class="card">
@@ -77,14 +77,14 @@
 
       <section class="card">
         <h2>Catatan lapangan</h2>
-        <p class="muted">Status dan catatan disimpan lokal pada perangkat/browser ini.</p>
-        <button id="exportNotes">Export catatan CSV</button>
+        <p class="muted">Saat API tersedia catatan disimpan ke PostGIS. Jika koneksi putus, catatan tetap disimpan lokal sebagai fallback.</p>
+        <button id="exportNotes">Export catatan lokal CSV</button>
         <button id="clearNotes" class="danger-light">Hapus catatan lokal</button>
       </section>
 
       <section class="card small">
         <strong>Status teknis</strong>
-        <p>Lokasi ekologis terkunci; perubahan titik hanya melalui review akses, izin, dan keselamatan.</p>
+        <p>Lokasi ekologis terkunci. Perubahan koordinat hanya melalui review akses, izin, keselamatan, dan kandidat substitusi yang terdokumentasi.</p>
       </section>
     </aside>
 
@@ -94,8 +94,8 @@
     </section>
   </main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -30,3 +30,8 @@ button.primary{background:#111827;color:#fff;border-color:#111827}.danger-light{
   #sidebar.open{transform:translateX(0)}
   #mapWrap{height:100%}#sidebarToggle{display:block}
 }
+
+.field-editor input[type=text]{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:7px;margin-top:4px}
+.maplibregl-popup-content{border-radius:12px;padding:12px;box-shadow:0 8px 28px #0002}
+.maplibregl-popup-close-button{font-size:20px;padding:2px 7px}
+.save-status{display:block;margin-top:6px}
