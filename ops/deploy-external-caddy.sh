@@ -18,6 +18,9 @@ mkdir -p data/import data/rasters data/backups
 
 compose=(docker compose -f docker-compose.yml -f docker-compose.external.yml)
 
+echo "[0/7] Prepare self-hosted MapLibre assets"
+bash ops/vendor-maplibre.sh
+
 wait_http() {
   local name="$1"
   local url="$2"

@@ -17,6 +17,9 @@ set +a
 
 mkdir -p data/import data/rasters
 
+echo "[0/5] Prepare self-hosted MapLibre assets"
+bash ops/vendor-maplibre.sh
+
 echo "[1/5] Build + start containers"
 docker compose up -d --build
 
