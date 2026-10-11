@@ -13,12 +13,12 @@ window.WEBGIS_CONFIG = {
     maxZoom: 20
   },
 
-  // Source IDs Martin mengikuti nama tabel hasil import ke schema gis.
+  // Source IDs Martin mengikuti catalog runtime; schema gis tidak dipakai sebagai prefix source ID.
   vectorSources: {
-    roads: "gis.roads",
-    occurrence: "gis.species_occurrence",
-    hsi: "gis.hsi_class",
-    change: "gis.habitat_change"
+    roads: "roads",
+    occurrence: "species_occurrence",
+    hsi: "hsi_class",
+    change: "habitat_change"
   },
 
   localFallback: {
