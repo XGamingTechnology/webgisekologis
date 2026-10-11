@@ -33,6 +33,14 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
 map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
 
+const mapContainer = document.getElementById("mapWrap");
+const resizeMap = () => requestAnimationFrame(() => map.resize());
+if ("ResizeObserver" in window && mapContainer) {
+  new ResizeObserver(resizeMap).observe(mapContainer);
+}
+window.addEventListener("resize", resizeMap, { passive: true });
+window.addEventListener("orientationchange", () => setTimeout(resizeMap, 150));
+
 const accessColor = ["match",
   ["coalesce",["get","Access_Priority"],["get","access_priority"],""],
   "A","#1f9d74","B","#e0a21a","C","#d84a3a","#2563eb"
@@ -135,7 +143,7 @@ function openPanel(id){
   if(already || !target) return;
   target.classList.add("is-open");
   document.querySelector(`.map-tool[data-panel="${id}"]`)?.classList.add("active");
-  if(window.matchMedia("(max-width:820px)").matches) document.getElementById("panelBackdrop").hidden=false;
+  if(window.matchMedia("(max-width:1400px) and (pointer:coarse)").matches || window.matchMedia("(max-width:820px)").matches) document.getElementById("panelBackdrop").hidden=false;
 }
 
 function focusSiteByQuery(){
@@ -217,6 +225,7 @@ function wireUi(){
 }
 
 map.on("load",async()=>{
+  resizeMap();
   wireUi();
   try{
     sites=await loadSites();
