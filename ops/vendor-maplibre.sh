@@ -46,6 +46,7 @@ find_asset() {
 
 MJS="$(find_asset maplibre-gl.mjs)"
 WORKER="$(find_asset maplibre-gl-worker.mjs)"
+SHARED="$(find_asset maplibre-gl-shared.mjs)"
 CSS="$(find_asset maplibre-gl.css)"
 
 for f in "$MJS" "$WORKER" "$CSS"; do
@@ -55,9 +56,15 @@ for f in "$MJS" "$WORKER" "$CSS"; do
   fi
 done
 
+if [[ -z "$SHARED" || ! -f "$SHARED" ]]; then
+  echo "ERROR: dist.zip tidak memuat maplibre-gl-shared.mjs" >&2
+  exit 1
+fi
+
 install -m 0644 "$MJS" "${VENDOR_DIR}/maplibre-gl.mjs"
 install -m 0644 "$WORKER" "${VENDOR_DIR}/maplibre-gl-worker.mjs"
+install -m 0644 "$SHARED" "${VENDOR_DIR}/maplibre-gl-shared.mjs"
 install -m 0644 "$CSS" "${VENDOR_DIR}/maplibre-gl.css"
 
 echo "✓ MapLibre assets ready in ${VENDOR_DIR}"
-ls -lh "${VENDOR_DIR}/maplibre-gl.mjs" "${VENDOR_DIR}/maplibre-gl-worker.mjs" "${VENDOR_DIR}/maplibre-gl.css"
+ls -lh "${VENDOR_DIR}/maplibre-gl.mjs" "${VENDOR_DIR}/maplibre-gl-worker.mjs" "${VENDOR_DIR}/maplibre-gl-shared.mjs" "${VENDOR_DIR}/maplibre-gl.css"
