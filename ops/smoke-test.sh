@@ -13,8 +13,7 @@ set +a
 
 BASE="https://${DOMAIN}"
 
-echo "== Public frontend =="
-curl -fsSI "${BASE}/" | head
+echo "== Self-hosted MapLibre assets ==\nfor asset in vendor/maplibre-gl.mjs vendor/maplibre-gl-worker.mjs vendor/maplibre-gl.css; do\n  curl -fsS "${BASE}/${asset}" >/dev/null\n  echo "  ✓ ${asset}"\ndone\necho\n\necho "== Public frontend =="\ncurl -fsSI "${BASE}/" | head
 echo
 
 echo "== API health =="
