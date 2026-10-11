@@ -165,3 +165,26 @@ textarea{resize:vertical}
   .status-pill{display:none}.mini-summary{grid-template-columns:repeat(4,1fr)}.mini-summary strong{font-size:15px}
   .form-grid{grid-template-columns:1fr}.site-grid{grid-template-columns:1fr 1fr}
 }
+
+/* Tablet/iPad layout */
+@media (max-width:1400px) and (pointer:coarse){
+  .topbar{height:62px;padding:0 12px}
+  .brand-mark{width:34px;height:34px}
+  .brand-copy h1{font-size:15px}
+  .brand-copy p{font-size:10px}
+  .workspace{min-height:0}
+  .map-tools{
+    left:12px;right:12px;top:auto;bottom:max(12px,env(safe-area-inset-bottom));
+    flex-direction:row;justify-content:space-between;padding:7px;border-radius:17px;z-index:30
+  }
+  .map-tool{flex:1;width:auto;min-height:50px}
+  .floating-panel{
+    left:12px;right:12px;top:auto;bottom:82px;width:auto;max-height:min(52vh,540px);
+    border-radius:20px;transform:translateY(14px);z-index:28
+  }
+  .floating-panel.is-open{transform:none}
+  .panel-backdrop{display:block;position:absolute;inset:0;background:rgba(15,23,42,.14);z-index:20}
+  .site-card{left:12px;right:12px;bottom:86px;width:auto;max-width:620px;z-index:26}
+  .map-context{display:none}
+  .survey-workspace{width:min(620px,100vw)}
+}
