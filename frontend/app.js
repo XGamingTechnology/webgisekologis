@@ -5,8 +5,8 @@ let lastPosition = null;
 
 if (!window.maplibregl) {
   const mode = document.getElementById("dataMode");
-  if (mode) mode.textContent = "MapLibre gagal dimuat — periksa koneksi/CDN lalu muat ulang.";
-  throw new Error("MapLibre GL JS gagal dimuat dari CDN utama maupun fallback");
+  if (mode) mode.textContent = "MapLibre gagal dimuat dari aset lokal — jalankan deploy ulang.";
+  throw new Error("MapLibre GL JS gagal dimuat dari aset lokal");
 }
 
 const map = new maplibregl.Map({
