@@ -3,126 +3,234 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111827" />
+  <meta name="theme-color" content="#0b1220" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <title>WebGIS Survei Habitat & Satwa — Kota Yogyakarta</title>
+  <title>GeoPro Field GIS — Survei Habitat & Satwa</title>
   <link rel="stylesheet" href="vendor/maplibre-gl.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <div>
-      <h1>WebGIS Survei Habitat & Satwa</h1>
-      <p>Kota Yogyakarta — navigasi, verifikasi akses, dan pencatatan lapangan</p>
+  <div id="appShell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">G</div>
+        <div class="brand-copy">
+          <h1>GeoPro Field GIS</h1>
+          <p>Survei habitat & satwa · Kota Yogyakarta</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="onlineBadge" class="status-pill">…</span>
+        <button id="locateBtn" class="btn btn-primary" type="button">
+          <span aria-hidden="true">⌖</span><span>Lokasi saya</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section id="mapWrap" aria-label="Peta survei">
+        <div id="map"></div>
+
+        <nav class="map-tools" aria-label="Peralatan peta">
+          <button class="map-tool active" data-panel="searchPanel" type="button" aria-label="Cari titik">
+            <span class="map-tool-icon">⌕</span><span class="map-tool-label">Cari</span>
+          </button>
+          <button class="map-tool" data-panel="filterPanel" type="button" aria-label="Filter">
+            <span class="map-tool-icon">≡</span><span class="map-tool-label">Filter</span>
+          </button>
+          <button class="map-tool" data-panel="layerPanel" type="button" aria-label="Layer">
+            <span class="map-tool-icon">▱</span><span class="map-tool-label">Layer</span>
+          </button>
+          <button class="map-tool" data-panel="progressPanel" type="button" aria-label="Progress">
+            <span class="map-tool-icon">✓</span><span class="map-tool-label">Progress</span>
+          </button>
+          <button class="map-tool" data-panel="settingsPanel" type="button" aria-label="Pengaturan">
+            <span class="map-tool-icon">⚙</span><span class="map-tool-label">Setelan</span>
+          </button>
+        </nav>
+
+        <div id="panelBackdrop" class="panel-backdrop" hidden></div>
+
+        <section id="searchPanel" class="floating-panel is-open" aria-label="Cari titik survei">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Pencarian</span><h2>Cari titik survei</h2></div>
+            <button class="icon-btn panel-close" type="button" aria-label="Tutup">×</button>
+          </div>
+          <label class="field-label" for="searchSite">Site ID</label>
+          <div class="search-row">
+            <input id="searchSite" type="search" placeholder="Contoh: V3-001" autocomplete="off" />
+            <button id="searchFocusBtn" class="btn" type="button">Fokus</button>
+          </div>
+          <p class="panel-help">Ketik Site ID untuk menyaring titik pada peta.</p>
+          <div class="mini-summary">
+            <div><strong id="statTotal">–</strong><span>Titik</span></div>
+            <div><strong id="statA">–</strong><span>Access A</span></div>
+            <div><strong id="statB">–</strong><span>Access B</span></div>
+            <div><strong id="statC">–</strong><span>Access C</span></div>
+          </div>
+          <div id="dataMode" class="data-status">Memuat sumber data…</div>
+        </section>
+
+        <section id="filterPanel" class="floating-panel" aria-label="Filter peta">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Analisis cepat</span><h2>Filter titik</h2></div>
+            <button class="icon-btn panel-close" type="button" aria-label="Tutup">×</button>
+          </div>
+          <label class="field-label">Kelas HSI
+            <select id="filterHSI">
+              <option value="">Semua kelas</option>
+              <option>High</option>
+              <option>Moderate</option>
+              <option>Low</option>
+            </select>
+          </label>
+          <label class="field-label">Fungsi survei
+            <select id="filterFunction">
+              <option value="">Semua fungsi</option>
+              <option>Confirmatory presence</option>
+              <option>Change verification</option>
+              <option>Candidate non-detection</option>
+              <option>Exploratory high-potential</option>
+            </select>
+          </label>
+          <label class="field-label">Prioritas akses
+            <select id="filterAccess">
+              <option value="">Semua akses</option>
+              <option>A</option>
+              <option>B</option>
+              <option>C</option>
+            </select>
+          </label>
+          <button id="resetFilters" class="btn btn-wide" type="button">Reset filter</button>
+        </section>
+
+        <section id="layerPanel" class="floating-panel" aria-label="Layer peta">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Map layers</span><h2>Layer manager</h2></div>
+            <button class="icon-btn panel-close" type="button" aria-label="Tutup">×</button>
+          </div>
+          <div class="layer-list">
+            <label class="layer-item"><span><strong>Titik survei final</strong><small>30 lokasi operasional</small></span><input id="toggleSites" type="checkbox" checked /></label>
+            <label class="layer-item"><span><strong>Batas AOI</strong><small>Kota Yogyakarta</small></span><input id="toggleAOI" type="checkbox" checked /></label>
+            <label class="layer-item"><span><strong>Jaringan jalan</strong><small>Akses operasional</small></span><input id="toggleRoads" type="checkbox" checked /></label>
+            <label class="layer-item"><span><strong>Observasi historis</strong><small>Occurrence terverifikasi</small></span><input id="toggleOccurrence" type="checkbox" /></label>
+            <label class="layer-item"><span><strong>Kelas HSI</strong><small>High · Moderate · Low</small></span><input id="toggleHSI" type="checkbox" /></label>
+            <label class="layer-item"><span><strong>Perubahan habitat</strong><small>Degraded · Recovery · Stable</small></span><input id="toggleChange" type="checkbox" /></label>
+          </div>
+        </section>
+
+        <section id="progressPanel" class="floating-panel" aria-label="Progress survei">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Operasional lapangan</span><h2>Progress survei</h2></div>
+            <button class="icon-btn panel-close" type="button" aria-label="Tutup">×</button>
+          </div>
+          <div class="progress-track"><div id="progressBar"></div></div>
+          <div class="progress-grid">
+            <div><strong id="statVisited">–</strong><span>Dikunjungi</span></div>
+            <div><strong id="statRemaining">–</strong><span>Sisa</span></div>
+            <div><strong id="statPending">0</strong><span>Pending sync</span></div>
+          </div>
+          <button id="syncBtn" class="btn btn-primary btn-wide" type="button">↻ Sinkronkan data</button>
+          <p id="syncStatus" class="panel-help">Belum ada sinkronisasi.</p>
+        </section>
+
+        <section id="settingsPanel" class="floating-panel" aria-label="Pengaturan perangkat">
+          <div class="panel-heading">
+            <div><span class="eyebrow">Perangkat surveyor</span><h2>Pengaturan lapangan</h2></div>
+            <button class="icon-btn panel-close" type="button" aria-label="Tutup">×</button>
+          </div>
+          <label class="field-label">Nama / inisial default
+            <input id="defaultSurveyor" type="text" placeholder="Contoh: Tim-1 / RR" />
+          </label>
+          <label class="field-label">Field write token
+            <input id="fieldToken" type="password" placeholder="Diberikan admin" autocomplete="off" />
+          </label>
+          <div class="button-row">
+            <button id="saveDeviceSettings" class="btn btn-primary" type="button">Simpan</button>
+            <button id="installBtn" class="btn" type="button" hidden>Install app</button>
+          </div>
+          <div class="divider"></div>
+          <div class="settings-actions">
+            <button id="exportNotes" class="btn btn-wide" type="button">Export catatan lokal CSV</button>
+            <button id="clearNotes" class="btn btn-danger btn-wide" type="button">Hapus catatan lokal</button>
+          </div>
+          <p class="panel-help">Token hanya tersimpan pada browser perangkat ini.</p>
+        </section>
+
+        <aside id="siteCard" class="site-card" hidden aria-live="polite"></aside>
+
+        <div class="map-context">
+          <span class="context-dot"></span>
+          <span>Lokasi ekologis terkunci · perubahan hanya melalui review akses, izin, dan keselamatan.</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="surveyBackdrop" class="survey-backdrop" hidden></div>
+  <aside id="surveyWorkspace" class="survey-workspace" aria-hidden="true">
+    <div class="survey-header">
+      <div>
+        <span class="eyebrow">Field survey workspace</span>
+        <h2 id="surveySiteId">Pilih titik survei</h2>
+      </div>
+      <button id="closeSurveyBtn" class="icon-btn" type="button" aria-label="Tutup survei">×</button>
     </div>
-    <div class="header-actions"><span id="onlineBadge" class="badge">…</span><button id="locateBtn" class="primary">📍 Lokasi saya</button></div>
-  </header>
 
-  <main>
-    <aside id="sidebar">
-      <section class="card">
-        <h2>Progress Lapangan</h2>
-        <div class="progress-track"><div id="progressBar"></div></div>
-        <div class="stats stats3">
-          <div><span id="statVisited">–</span><small>Dikunjungi</small></div>
-          <div><span id="statRemaining">–</span><small>Sisa</small></div>
-          <div><span id="statPending">0</span><small>Pending sync</small></div>
-        </div>
-        <button id="syncBtn" class="wide">↻ Sinkronkan data</button>
-        <p id="syncStatus" class="muted">Belum ada sinkronisasi.</p>
-      </section>
+    <div id="surveySiteMeta" class="survey-meta"></div>
 
-      <section class="card">
-        <h2>Ringkasan</h2>
-        <div class="stats">
-          <div><span id="statTotal">–</span><small>Titik</small></div>
-          <div><span id="statA">–</span><small>Access A</small></div>
-          <div><span id="statB">–</span><small>Access B</small></div>
-          <div><span id="statC">–</span><small>Access C</small></div>
-        </div>
-        <p id="dataMode" class="muted">Memuat sumber data…</p>
-      </section>
-
-      <section class="card">
-        <h2>Cari titik</h2>
-        <input id="searchSite" type="search" placeholder="Contoh: V3-001" />
-      </section>
-
-      <section class="card">
-        <h2>Filter</h2>
-        <label>HSI
-          <select id="filterHSI">
-            <option value="">Semua</option>
-            <option>High</option>
-            <option>Moderate</option>
-            <option>Low</option>
+    <form id="surveyForm" class="survey-form">
+      <section class="survey-section">
+        <div class="section-title"><span>01</span><div><strong>Status kunjungan</strong><small>Catat hasil kunjungan lapangan.</small></div></div>
+        <label class="field-label">Status
+          <select id="surveyStatus" required>
+            <option>Belum dikunjungi</option>
+            <option>Terverifikasi</option>
+            <option>Tidak dapat diakses</option>
+            <option>Perlu izin</option>
+            <option>Diganti</option>
           </select>
         </label>
-        <label>Fungsi survei
-          <select id="filterFunction">
-            <option value="">Semua</option>
-            <option>Confirmatory presence</option>
-            <option>Change verification</option>
-            <option>Candidate non-detection</option>
-            <option>Exploratory high-potential</option>
-          </select>
-        </label>
-        <label>Akses
-          <select id="filterAccess">
-            <option value="">Semua</option>
-            <option>A</option>
-            <option>B</option>
-            <option>C</option>
-          </select>
-        </label>
-        <button id="resetFilters">Reset filter</button>
       </section>
 
-      <section class="card">
-        <h2>Layer</h2>
-        <label class="check"><input id="toggleSites" type="checkbox" checked /> Titik survei final</label>
-        <label class="check"><input id="toggleAOI" type="checkbox" checked /> Batas AOI</label>
-        <label class="check"><input id="toggleRoads" type="checkbox" checked /> Jaringan jalan</label>
-        <label class="check"><input id="toggleOccurrence" type="checkbox" /> Observasi historis</label>
-        <label class="check"><input id="toggleHSI" type="checkbox" /> Kelas HSI</label>
-        <label class="check"><input id="toggleChange" type="checkbox" /> Perubahan habitat</label>
-      </section>
-
-      <section class="card">
-        <h2>Perangkat Surveyor</h2>
-        <label>Nama / inisial default
-          <input id="defaultSurveyor" type="text" placeholder="Contoh: Tim-1 / RR" />
-        </label>
-        <label>Field write token
-          <input id="fieldToken" type="password" placeholder="Diberikan admin" autocomplete="off" />
-        </label>
-        <div class="row">
-          <button id="saveDeviceSettings">Simpan</button>
-          <button id="installBtn" hidden>Install App</button>
+      <section class="survey-section">
+        <div class="section-title"><span>02</span><div><strong>Deteksi & effort</strong><small>Non-detection hanya dicatat setelah effort standar dilakukan.</small></div></div>
+        <div class="form-grid">
+          <label class="field-label">Detection
+            <select id="surveyDetection">
+              <option value="">– pilih –</option>
+              <option>Detected</option>
+              <option>Non-detected</option>
+              <option>Not assessed</option>
+            </select>
+          </label>
+          <label class="field-label">Effort (menit)
+            <input id="surveyEffort" type="number" min="0" step="1" inputmode="numeric" />
+          </label>
         </div>
-        <p class="muted">Token hanya tersimpan pada browser perangkat ini.</p>
       </section>
 
-      <section class="card">
-        <h2>Catatan lapangan</h2>
-        <p class="muted">Saat API tersedia catatan disimpan ke PostGIS. Jika koneksi putus, catatan tetap disimpan lokal sebagai fallback.</p>
-        <button id="exportNotes">Export catatan lokal CSV</button>
-        <button id="clearNotes" class="danger-light">Hapus catatan lokal</button>
+      <section class="survey-section">
+        <div class="section-title"><span>03</span><div><strong>Surveyor & catatan</strong><small>Catat kondisi akses, habitat, izin, dan temuan penting.</small></div></div>
+        <label class="field-label">Surveyor
+          <input id="surveySurveyor" type="text" placeholder="Nama / inisial" />
+        </label>
+        <label class="field-label">Catatan lapangan
+          <textarea id="surveyNotes" rows="6" placeholder="Akses, izin, kondisi habitat, temuan, alasan non-detection, dan catatan keselamatan…"></textarea>
+        </label>
       </section>
 
-      <section class="card small">
-        <strong>Status teknis</strong>
-        <p>Lokasi ekologis terkunci. Perubahan koordinat hanya melalui review akses, izin, keselamatan, dan kandidat substitusi yang terdokumentasi.</p>
-      </section>
-    </aside>
-
-    <section id="mapWrap">
-      <div id="map"></div>
-      <button id="sidebarToggle" aria-label="Toggle panel">☰</button>
-    </section>
-  </main>
+      <div class="survey-savebar">
+        <div>
+          <span id="surveySaveStatus" class="save-state">Belum disimpan</span>
+          <small id="surveyCoordinateHint">Koordinat site akan dipakai jika GPS perangkat belum tersedia.</small>
+        </div>
+        <button id="saveSurveyBtn" class="btn btn-primary" type="submit">Simpan survei</button>
+      </div>
+    </form>
+  </aside>
 
   <script type="module" src="bootstrap.js"></script>
 </body>
