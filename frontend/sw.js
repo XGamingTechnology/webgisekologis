@@ -1,4 +1,4 @@
-const CACHE="webgis-shell-v3";
+const CACHE="webgis-shell-v4";
 const SHELL=[
   "/",
   "/index.html",
@@ -10,6 +10,7 @@ const SHELL=[
   "/manifest.webmanifest",
   "/vendor/maplibre-gl.mjs",
   "/vendor/maplibre-gl-worker.mjs",
+  "/vendor/maplibre-gl-shared.mjs",
   "/vendor/maplibre-gl.css"
 ];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL))));

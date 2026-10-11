@@ -14,10 +14,27 @@ set +a
 BASE="https://${DOMAIN}"
 
 echo "== Self-hosted MapLibre assets =="
-for asset in vendor/maplibre-gl.mjs vendor/maplibre-gl-worker.mjs vendor/maplibre-gl.css; do
-  curl -fsS "${BASE}/${asset}" >/dev/null
-  echo "  ✓ ${asset}"
-done
+check_asset() {
+  local asset="$1"
+  local expected="$2"
+  local headers
+  local content_type
+
+  headers="$(curl -fsSI "${BASE}/${asset}" | tr -d '\r')"
+  content_type="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="content-type"{print tolower($2); exit}')"
+
+  if [[ "$content_type" != "$expected"* ]]; then
+    echo "ERROR: ${asset} MIME ${content_type:-<missing>} (expected ${expected})" >&2
+    exit 1
+  fi
+
+  echo "  ✓ ${asset} (${content_type})"
+}
+
+check_asset "vendor/maplibre-gl.mjs" "text/javascript"
+check_asset "vendor/maplibre-gl-worker.mjs" "text/javascript"
+check_asset "vendor/maplibre-gl-shared.mjs" "text/javascript"
+check_asset "vendor/maplibre-gl.css" "text/css"
 echo
 
 echo "== Public frontend =="
