@@ -13,10 +13,10 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          node --check app.js
-          node --check field-mode.js
-          node --check config.js
-          node --check sw.js
+          node --check frontend/app.js
+          node --check frontend/field-mode.js
+          node --check frontend/config.js
+          node --check frontend/sw.js
 
       - name: Check Python syntax
         run: |

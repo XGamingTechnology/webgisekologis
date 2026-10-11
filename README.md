@@ -28,7 +28,7 @@ Raster besar yang akan disajikan melalui TiTiler ditempatkan sebagai COG pada:
 data/rasters/
 ```
 
-GeoJSON di repo hanya berfungsi sebagai fallback saat PostGIS/Martin belum tersedia.
+GeoJSON kecil di frontend/data hanya berfungsi sebagai fallback. GIS besar tidak lagi disimpan sebagai runtime GeoJSON di repository; gunakan PostGIS/Martin dan COG/TiTiler.
 
 ## Deploy VPS
 
@@ -79,6 +79,8 @@ cp .env.example .env
 # edit .env
 bash ops/deploy.sh
 bash ops/smoke-test.sh
+# optional backup
+bash ops/backup.sh
 ~~~
 
 ## Development
