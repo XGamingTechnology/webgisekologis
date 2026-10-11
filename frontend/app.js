@@ -2,6 +2,7 @@ const C = window.WEBGIS_CONFIG || {};
 const local = C.localFallback || {};
 let sites = null;
 let lastPosition = null;
+let activeSurveyFeature = null;
 
 if (!window.maplibregl) {
   const mode = document.getElementById("dataMode");
@@ -29,12 +30,12 @@ const map = new maplibregl.Map({
   }
 });
 
-map.addControl(new maplibregl.NavigationControl(), "top-right");
+map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
 map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
 
 const accessColor = ["match",
   ["coalesce",["get","Access_Priority"],["get","access_priority"],""],
-  "A","#2e7d32","B","#f9a825","C","#c62828","#2563eb"
+  "A","#1f9d74","B","#e0a21a","C","#d84a3a","#2563eb"
 ];
 
 function p(obj,...names){
@@ -45,8 +46,11 @@ const siteId = x => p(x,"Site_ID","site_id","SITE_ID");
 const hsi = x => p(x,"HabitatClass","habitatclass","habitat_class","HSI_Class_Name","hsi_class");
 const surveyFunction = x => p(x,"Survey_Function","survey_function","Survey_Function_Revised");
 const access = x => String(p(x,"Access_Priority","access_priority")).replace("Access ","");
+const accessClass = x => p(x,"Access_Class","access_class");
 const taxa = x => p(x,"Survey_Taxon_Targets","survey_taxon_targets","Taxon_Targets","taxon_targets");
 const changeClass = x => p(x,"Integrated_Change_Class","integrated_change_class","Change_Class","class_name");
+const roadDistance = x => p(x,"Dist_DriveRoad_m","dist_driveroad_m","dist_drive_road_m");
+const nearestRoad = x => p(x,"Nearest_Road_Class","nearest_road_class");
 const esc = s => String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
 async function getJson(url){
@@ -54,22 +58,19 @@ async function getJson(url){
   if(!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json();
 }
-function localKey(id){ return `field-note:${id}`; }
-function readLocal(id){ try{return JSON.parse(localStorage.getItem(localKey(id))||"{}")}catch{return{}} }
-function writeLocal(id,v){ localStorage.setItem(localKey(id),JSON.stringify(v)); }
 
 async function loadSites(){
   if(C.dataMode !== "static"){
     try{
       const fc=await getJson(`${C.apiBase||"/api"}/sites`);
       if(fc?.features?.length){
-        document.getElementById("dataMode").textContent="Data: PostGIS API + Martin";
+        document.getElementById("dataMode").textContent="Live · PostGIS API + Martin";
         return fc;
       }
     }catch(e){ console.info("API fallback:",e); }
   }
   const fc=await getJson(local.sites||"data/sites.geojson");
-  document.getElementById("dataMode").textContent="Data: GeoJSON lokal (fallback)";
+  document.getElementById("dataMode").textContent="Fallback · GeoJSON lokal";
   return fc;
 }
 
@@ -83,18 +84,21 @@ function stats(){
 }
 
 function filterExpr(){
-  const H=document.getElementById("filterHSI").value;
-  const F=document.getElementById("filterFunction").value;
-  const A=document.getElementById("filterAccess").value;
-  const Q=document.getElementById("searchSite").value.trim().toLowerCase();
+  const H=document.getElementById("filterHSI")?.value || "";
+  const F=document.getElementById("filterFunction")?.value || "";
+  const A=document.getElementById("filterAccess")?.value || "";
+  const Q=(document.getElementById("searchSite")?.value || "").trim().toLowerCase();
   const all=["all"];
   if(H) all.push(["==",["coalesce",["get","HabitatClass"],["get","habitatclass"],["get","habitat_class"],""],H]);
-  if(F) all.push(["==",["coalesce",["get","Survey_Function"],["get","survey_function"],""],F]);
+  if(F) all.push(["==",["coalesce",["get","Survey_Function"],["get","survey_function"],["get","Survey_Function_Revised"],""],F]);
   if(A) all.push(["==",["coalesce",["get","Access_Priority"],["get","access_priority"],""],A]);
   if(Q) all.push(["in",Q,["downcase",["to-string",["coalesce",["get","Site_ID"],["get","site_id"],["get","SITE_ID"],""]]]]);
   return all;
 }
-function applyFilter(){ if(map.getLayer("sites")) map.setFilter("sites",filterExpr()); }
+
+function applyFilter(){
+  if(map.getLayer("sites")) map.setFilter("sites",filterExpr());
+}
 
 function addGeoJson(id,data,type,paint,visibility="visible"){
   map.addSource(id+"-src",{type:"geojson",data});
@@ -109,7 +113,7 @@ async function addGeoJsonOptional(id,url,type,paint,visibility="none"){
 async function addMvtOrFallback(id,sourceName,fallback,type,paint,visibility="none"){
   if(C.dataMode !== "static" && sourceName){
     try{
-      const tj=await getJson(`${C.martinBase||"/tiles"}/${sourceName}`);
+      await getJson(`${C.martinBase||"/tiles"}/${sourceName}`);
       map.addSource(id+"-src",{type:"vector",url:`${C.martinBase||"/tiles"}/${sourceName}`});
       map.addLayer({id,type,source:id+"-src","source-layer":sourceName,layout:{visibility},paint});
       return;
@@ -118,73 +122,87 @@ async function addMvtOrFallback(id,sourceName,fallback,type,paint,visibility="no
   await addGeoJsonOptional(id,fallback,type,paint,visibility);
 }
 
-function popupHtml(f){
-  const q=f.properties||{}, id=siteId(q), [lng,lat]=f.geometry.coordinates, saved=readLocal(id);
-  return `<div class="site-popup" data-site="${esc(id)}" data-lat="${lat}" data-lng="${lng}">
-    <h3>${esc(id)}</h3>
-    <div class="kv">
-      <b>HSI</b><span>${esc(hsi(q))}</span>
-      <b>Fungsi</b><span>${esc(surveyFunction(q))}</span>
-      <b>Target takson</b><span>${esc(taxa(q))}</span>
-      <b>Habitat change</b><span>${esc(changeClass(q))}</span>
-      <b>Access</b><span>${esc(access(q))} — ${esc(p(q,"Access_Class","access_class"))}</span>
-      <b>Jarak jalan</b><span>${esc(p(q,"Dist_DriveRoad_m","dist_driveroad_m"))} m</span>
-      <b>Nearest road</b><span>${esc(p(q,"Nearest_Road_Class","nearest_road_class"))}</span>
-    </div>
-    <div class="popup-actions">
-      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener">🧭 Navigasi</a>
-      <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener">🗺 Maps</a>
-    </div>
-    <div class="field-editor">
-      <label>Status kunjungan<select class="field-status">
-        ${["Belum dikunjungi","Terverifikasi","Tidak dapat diakses","Perlu izin","Diganti"].map(x=>`<option ${saved.status===x?"selected":""}>${x}</option>`).join("")}
-      </select></label>
-      <label>Surveyor<input class="field-surveyor" type="text" value="${esc(saved.surveyor||"")}" placeholder="Nama / inisial"/></label>
-      <label>Catatan<textarea class="field-note" placeholder="akses, izin, effort, kondisi habitat, temuan...">${esc(saved.note||"")}</textarea></label>
-      <button class="save-note">Simpan catatan</button>
-      <small class="save-status muted"></small>
-    </div>
-  </div>`;
+function closePanels(){
+  document.querySelectorAll(".floating-panel").forEach(x=>x.classList.remove("is-open"));
+  document.querySelectorAll(".map-tool").forEach(x=>x.classList.remove("active"));
+  document.getElementById("panelBackdrop").hidden=true;
 }
 
-async function saveObservation(node){
-  const id=node.dataset.site;
-  const rec={
-    status:node.querySelector(".field-status").value,
-    surveyor:node.querySelector(".field-surveyor").value,
-    note:node.querySelector(".field-note").value,
-    saved_at:new Date().toISOString()
+function openPanel(id){
+  const target=document.getElementById(id);
+  const already=target?.classList.contains("is-open");
+  closePanels();
+  if(already || !target) return;
+  target.classList.add("is-open");
+  document.querySelector(`.map-tool[data-panel="${id}"]`)?.classList.add("active");
+  if(window.matchMedia("(max-width:820px)").matches) document.getElementById("panelBackdrop").hidden=false;
+}
+
+function focusSiteByQuery(){
+  const q=(document.getElementById("searchSite")?.value||"").trim().toLowerCase();
+  if(!q || !sites?.features?.length) return;
+  const feature=sites.features.find(f=>String(siteId(f.properties||{})).toLowerCase()===q)
+    || sites.features.find(f=>String(siteId(f.properties||{})).toLowerCase().includes(q));
+  if(!feature?.geometry?.coordinates) return;
+  map.flyTo({center:feature.geometry.coordinates,zoom:17,duration:800});
+  showSiteCard(feature);
+}
+
+function showSiteCard(feature){
+  activeSurveyFeature=feature;
+  const card=document.getElementById("siteCard");
+  const q=feature.properties||{};
+  const id=siteId(q);
+  const [lng,lat]=feature.geometry.coordinates;
+  card.innerHTML=`
+    <div class="site-card-head">
+      <div><span class="eyebrow">Selected survey site</span><h3>${esc(id)}</h3></div>
+      <button class="icon-btn site-card-close" type="button" aria-label="Tutup">×</button>
+    </div>
+    <div class="site-chips">
+      <span class="site-chip">HSI ${esc(hsi(q))}</span>
+      <span class="site-chip">Access ${esc(access(q))}</span>
+      <span class="site-chip">${esc(changeClass(q))}</span>
+    </div>
+    <div class="site-grid">
+      <div><small>Fungsi survei</small><strong>${esc(surveyFunction(q))}</strong></div>
+      <div><small>Target takson</small><strong>${esc(taxa(q))}</strong></div>
+      <div><small>Kelas akses</small><strong>${esc(accessClass(q))}</strong></div>
+      <div><small>Jarak jalan</small><strong>${esc(roadDistance(q))} m · ${esc(nearestRoad(q))}</strong></div>
+    </div>
+    <div class="site-actions">
+      <a class="btn" href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener">Lihat Maps</a>
+      <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener">Navigasi</a>
+      <button class="btn btn-primary start-survey" type="button">Buka survey workspace</button>
+    </div>
+  `;
+  card.hidden=false;
+  card.querySelector(".site-card-close").onclick=()=>{card.hidden=true;activeSurveyFeature=null};
+  card.querySelector(".start-survey").onclick=()=>{
+    if(typeof window.openSurveyWorkspace==="function") window.openSurveyWorkspace(feature);
   };
-  writeLocal(id,rec);
-  const status=node.querySelector(".save-status");
-  try{
-    const body={
-      site_id:id,surveyor_name:rec.surveyor||null,survey_status:rec.status,notes:rec.note||null,
-      latitude:lastPosition?.coords?.latitude??Number(node.dataset.lat),
-      longitude:lastPosition?.coords?.longitude??Number(node.dataset.lng),
-      accuracy_m:lastPosition?.coords?.accuracy??null,
-      payload:{source:"webgis-maplibre",local_saved_at:rec.saved_at}
-    };
-    const r=await fetch(`${C.apiBase||"/api"}/observations`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-    if(!r.ok) throw new Error("API "+r.status);
-    status.textContent="✓ Server + perangkat";
-  }catch(e){
-    status.textContent="⚠ Offline/API gagal — tersimpan lokal";
-    console.info(e);
-  }
 }
 
 function wireUi(){
-  ["filterHSI","filterFunction","filterAccess"].forEach(id=>document.getElementById(id).addEventListener("change",applyFilter));
-  document.getElementById("searchSite").addEventListener("input",applyFilter);
-  document.getElementById("resetFilters").onclick=()=>{
-    ["filterHSI","filterFunction","filterAccess","searchSite"].forEach(id=>document.getElementById(id).value="");
+  document.querySelectorAll(".map-tool").forEach(btn=>btn.addEventListener("click",()=>openPanel(btn.dataset.panel)));
+  document.querySelectorAll(".panel-close").forEach(btn=>btn.addEventListener("click",closePanels));
+  document.getElementById("panelBackdrop").addEventListener("click",closePanels);
+
+  ["filterHSI","filterFunction","filterAccess"].forEach(id=>document.getElementById(id)?.addEventListener("change",applyFilter));
+  document.getElementById("searchSite")?.addEventListener("input",applyFilter);
+  document.getElementById("searchSite")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();focusSiteByQuery()}});
+  document.getElementById("searchFocusBtn")?.addEventListener("click",focusSiteByQuery);
+  document.getElementById("resetFilters")?.addEventListener("click",()=>{
+    ["filterHSI","filterFunction","filterAccess","searchSite"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=""});
     applyFilter();
-  };
+  });
+
   const layers={toggleSites:["sites"],toggleAOI:["aoi"],toggleRoads:["roads"],toggleOccurrence:["occurrence"],toggleHSI:["hsi"],toggleChange:["change"]};
-  Object.entries(layers).forEach(([id,ls])=>document.getElementById(id).onchange=e=>ls.forEach(l=>map.getLayer(l)&&map.setLayoutProperty(l,"visibility",e.target.checked?"visible":"none")));
-  document.getElementById("sidebarToggle").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
-  document.getElementById("locateBtn").onclick=()=>{
+  Object.entries(layers).forEach(([id,ls])=>document.getElementById(id)?.addEventListener("change",e=>{
+    ls.forEach(l=>map.getLayer(l)&&map.setLayoutProperty(l,"visibility",e.target.checked?"visible":"none"));
+  }));
+
+  document.getElementById("locateBtn")?.addEventListener("click",()=>{
     navigator.geolocation?.getCurrentPosition(pos=>{
       lastPosition=pos;
       const ll=[pos.coords.longitude,pos.coords.latitude];
@@ -192,46 +210,52 @@ function wireUi(){
       if(map.getSource("user-location")) map.getSource("user-location").setData({type:"Point",coordinates:ll});
       else{
         map.addSource("user-location",{type:"geojson",data:{type:"Point",coordinates:ll}});
-        map.addLayer({id:"user-location",type:"circle",source:"user-location",paint:{"circle-radius":8,"circle-color":"#2563eb","circle-stroke-color":"#fff","circle-stroke-width":3}});
+        map.addLayer({id:"user-location",type:"circle",source:"user-location",paint:{"circle-radius":8,"circle-color":"#0f766e","circle-stroke-color":"#fff","circle-stroke-width":3}});
       }
-    },()=>alert("Lokasi perangkat tidak tersedia / izin belum diberikan."),{enableHighAccuracy:true,timeout:12000});
-  };
-  document.getElementById("exportNotes").onclick=()=>{
-    const rows=[["Site_ID","Status","Surveyor","Note","Saved_at"]];
-    (sites?.features||[]).forEach(f=>{const id=siteId(f.properties||{}),n=readLocal(id);if(n.status||n.note||n.surveyor)rows.push([id,n.status||"",n.surveyor||"",n.note||"",n.saved_at||""])});
-    const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);a.download="field_notes.csv";a.click();URL.revokeObjectURL(a.href);
-  };
-  document.getElementById("clearNotes").onclick=()=>{
-    if(!confirm("Hapus seluruh catatan lokal?")) return;
-    Object.keys(localStorage).filter(k=>k.startsWith("field-note:")).forEach(k=>localStorage.removeItem(k));
-    alert("Catatan lokal dihapus. Data server tidak dihapus.");
-  };
+    },()=>alert("Lokasi perangkat tidak tersedia atau izin lokasi belum diberikan."),{enableHighAccuracy:true,timeout:12000});
+  });
 }
 
 map.on("load",async()=>{
   wireUi();
   try{
-    sites=await loadSites(); stats();
-    addGeoJson("sites",sites,"circle",{"circle-radius":["interpolate",["linear"],["zoom"],10,5,15,9,18,12],"circle-color":accessColor,"circle-stroke-color":"#111827","circle-stroke-width":1.2,"circle-opacity":0.95});
+    sites=await loadSites();
+    stats();
+    addGeoJson("sites",sites,"circle",{
+      "circle-radius":["interpolate",["linear"],["zoom"],10,5,15,9,18,12],
+      "circle-color":accessColor,
+      "circle-stroke-color":"#0b1220",
+      "circle-stroke-width":1.2,
+      "circle-opacity":0.95
+    });
     applyFilter();
     const b=new maplibregl.LngLatBounds();
     sites.features.forEach(f=>f.geometry?.type==="Point"&&b.extend(f.geometry.coordinates));
-    if(!b.isEmpty()) map.fitBounds(b,{padding:55,maxZoom:15});
-    map.on("click","sites",e=>{
-      const f=e.features?.[0]; if(!f)return;
-      new maplibregl.Popup({maxWidth:"360px"}).setLngLat(f.geometry.coordinates).setHTML(popupHtml(f)).addTo(map);
-      setTimeout(()=>{const n=document.querySelector(".site-popup"); if(n)n.querySelector(".save-note").onclick=()=>saveObservation(n)},0);
-    });
+    if(!b.isEmpty()) map.fitBounds(b,{padding:{top:55,bottom:55,left:55,right:55},maxZoom:15});
+    map.on("click","sites",e=>{const f=e.features?.[0];if(f)showSiteCard(f)});
     map.on("mouseenter","sites",()=>map.getCanvas().style.cursor="pointer");
     map.on("mouseleave","sites",()=>map.getCanvas().style.cursor="");
-  }catch(e){ console.error(e); document.getElementById("dataMode").textContent="Titik survei belum tersedia"; }
+  }catch(e){
+    console.error(e);
+    document.getElementById("dataMode").textContent="Titik survei belum tersedia";
+  }
 
-  await addGeoJsonOptional("aoi",local.aoi||"data/aoi.geojson","line",{"line-color":"#111827","line-width":2},"visible");
+  await addGeoJsonOptional("aoi",local.aoi||"data/aoi.geojson","line",{"line-color":"#0b1220","line-width":2},"visible");
   const vs=C.vectorSources||{};
-  await addMvtOrFallback("roads",vs.roads,local.roads||"data/roads.geojson","line",{"line-color":"#9ca3af","line-width":["interpolate",["linear"],["zoom"],11,0.5,16,1.5],"line-opacity":0.55},"visible");
-  await addMvtOrFallback("occurrence",vs.occurrence,local.occurrence||"data/occurrence.geojson","circle",{"circle-radius":3.5,"circle-color":"#4b5563","circle-opacity":0.55},"none");
-  await addMvtOrFallback("hsi",vs.hsi,local.hsi||"data/hsi_classes.geojson","fill",{"fill-color":["match",["coalesce",["get","class_name"],["get","HabitatClass"],["get","habitatclass"],""],"High","#18823b","Moderate","#f3c623","Low","#d9342b","#9ca3af"],"fill-opacity":0.34},"none");
-  await addMvtOrFallback("change",vs.change,local.change||"data/habitat_change.geojson","fill",{"fill-color":["match",["coalesce",["get","class_name"],["get","Integrated_Change_Class"],["get","integrated_change_class"],""],"Changed-Degraded","#d73027","Recovery","#2a9d8f","Stable","#bdbdbd","#bdbdbd"],"fill-opacity":0.32},"none");
+  await addMvtOrFallback("roads",vs.roads,local.roads||"data/roads.geojson","line",{
+    "line-color":"#8391a4","line-width":["interpolate",["linear"],["zoom"],11,0.5,16,1.6],"line-opacity":0.5
+  },"visible");
+  await addMvtOrFallback("occurrence",vs.occurrence,local.occurrence||"data/occurrence.geojson","circle",{
+    "circle-radius":3.5,"circle-color":"#475569","circle-opacity":0.55
+  },"none");
+  await addMvtOrFallback("hsi",vs.hsi,local.hsi||"data/hsi_classes.geojson","fill",{
+    "fill-color":["match",["coalesce",["get","class_name"],["get","HabitatClass"],["get","habitatclass"],""],
+      "High","#178447","Moderate","#e5b626","Low","#d94b3f","#94a3b8"],
+    "fill-opacity":0.32
+  },"none");
+  await addMvtOrFallback("change",vs.change,local.change||"data/habitat_change.geojson","fill",{
+    "fill-color":["match",["coalesce",["get","class_name"],["get","Integrated_Change_Class"],["get","integrated_change_class"],""],
+      "Changed-Degraded","#d73027","Recovery","#159487","Stable","#aab4c2","#aab4c2"],
+    "fill-opacity":0.31
+  },"none");
 });
