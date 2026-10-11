@@ -21,7 +21,7 @@ docker compose version
 ~~~bash
 sudo mkdir -p /opt/webgisekologis
 sudo chown "$USER":"$USER" /opt/webgisekologis
-git clone https://github.com/XGamingTechnology/webgisekologis.git /opt/webgisekologis
+git clone --depth 1 https://github.com/XGamingTechnology/webgisekologis.git /opt/webgisekologis
 cd /opt/webgisekologis
 ~~~
 
@@ -58,4 +58,4 @@ bash ops/smoke-test.sh
 The progress endpoint should report total=30 after the final package is imported.
 
 ## Backups
-Back up PostGIS, data/import, data/rasters, and .env secrets in a secure secret store. Do not use Git for large GIS source files or secrets.
+Back up PostGIS, data/import, data/rasters, and .env secrets in a secure secret store. Do not use Git for large GIS source files or secrets. The production frontend is isolated under frontend/, while data/import, data/rasters, and data/backups are runtime-only paths.
