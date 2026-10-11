@@ -1,0 +1,12 @@
+.env
+data/import/
+data/rasters/
+data/backups/
+*.tif
+*.tiff
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
