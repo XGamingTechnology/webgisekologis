@@ -1,0 +1,29 @@
+# Example block for an EXISTING host-level Caddy instance.
+# Replace gis.example.com with your real subdomain.
+
+gis.example.com {
+  encode zstd gzip
+
+  @api path /api/*
+  handle @api {
+    reverse_proxy 127.0.0.1:8010
+  }
+
+  @tiles path /tiles/*
+  handle @tiles {
+    uri strip_prefix /tiles
+    reverse_proxy 127.0.0.1:3010
+  }
+
+  @raster path /raster/*
+  handle @raster {
+    uri strip_prefix /raster
+    reverse_proxy 127.0.0.1:8011
+  }
+
+  handle {
+    root * /opt/webgisekologis/frontend
+    try_files {path} /index.html
+    file_server
+  }
+}
