@@ -13,10 +13,24 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
+          node --check frontend/bootstrap.js
           node --check frontend/app.js
           node --check frontend/field-mode.js
           node --check frontend/config.js
           node --check frontend/sw.js
+
+      - name: Check shell syntax
+        run: |
+          bash -n ops/vendor-maplibre.sh
+          bash -n ops/deploy.sh
+          bash -n ops/deploy-external-caddy.sh
+
+      - name: Ensure MapLibre is self-hosted
+        run: |
+          if grep -R -E 'cdn\.jsdelivr\.net/.+maplibre|unpkg\.com/.+maplibre' frontend/index.html frontend/*.js; then
+            echo "External MapLibre CDN reference found"
+            exit 1
+          fi
 
       - name: Check Python syntax
         run: |
