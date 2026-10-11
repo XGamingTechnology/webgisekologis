@@ -1,4 +1,4 @@
-const CACHE="webgis-shell-v4";
+const CACHE="webgis-shell-v5";
 const SHELL=[
   "/",
   "/index.html",
