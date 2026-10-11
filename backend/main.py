@@ -88,6 +88,10 @@ def site_detail(site_id: str):
     LIMIT 1
     """
     with pool.connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM gis.final_sites WHERE site_id = %s LIMIT 1", (body.site_id,))
+        if not cur.fetchone():
+            raise HTTPException(404, "Unknown final survey site")
+
         cur.execute(sql, (site_id,))
         row = cur.fetchone()
     if not row:
@@ -174,7 +178,8 @@ def create_observation(
         longitude = EXCLUDED.longitude,
         accuracy_m = EXCLUDED.accuracy_m,
         location = EXCLUDED.location,
-        payload = EXCLUDED.payload
+        payload = EXCLUDED.payload,
+        observed_at = now()
       RETURNING id, observed_at
     """
     cid = str(body.client_id) if body.client_id else None
