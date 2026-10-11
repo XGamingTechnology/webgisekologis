@@ -35,7 +35,7 @@ curl -fsS "${BASE}/tiles/catalog" | head -c 1500
 echo
 
 echo "== TiTiler =="
-curl -fsSI "${BASE}/raster/" | head
+curl -fsS "${BASE}/raster/" | head -c 1000
 echo
 
 echo "Smoke test complete."
