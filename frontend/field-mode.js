@@ -1,4 +1,9 @@
 (() => {
+  if (!window.maplibregl) {
+    console.warn("Field mode tidak diinisialisasi karena MapLibre belum tersedia.");
+    return;
+  }
+
   const PREFIX = "webgis-field:";
   const SETTINGS_KEY = PREFIX + "settings";
   const QUEUE_KEY = PREFIX + "queue";

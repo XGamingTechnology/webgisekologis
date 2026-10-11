@@ -1,5 +1,13 @@
 const C = window.WEBGIS_CONFIG || {};
 const local = C.localFallback || {};
+let sites = null;
+let lastPosition = null;
+
+if (!window.maplibregl) {
+  const mode = document.getElementById("dataMode");
+  if (mode) mode.textContent = "MapLibre gagal dimuat — periksa koneksi/CDN lalu muat ulang.";
+  throw new Error("MapLibre GL JS gagal dimuat dari CDN utama maupun fallback");
+}
 
 const map = new maplibregl.Map({
   container: "map",
@@ -23,9 +31,6 @@ const map = new maplibregl.Map({
 
 map.addControl(new maplibregl.NavigationControl(), "top-right");
 map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
-
-let sites = null;
-let lastPosition = null;
 
 const accessColor = ["match",
   ["coalesce",["get","Access_Priority"],["get","access_priority"],""],
