@@ -34,6 +34,17 @@ echo "== Martin catalog =="
 curl -fsS "${BASE}/tiles/catalog" | head -c 1500
 echo
 
+echo "== Required Martin sources =="
+for source in roads species_occurrence hsi_class habitat_change; do
+  curl -fsS "${BASE}/tiles/${source}" >/dev/null
+  echo "  ✓ ${source}"
+done
+echo
+
+echo "== Site detail API =="
+curl -fsS "${BASE}/api/site/V3-001" | head -c 1000
+echo
+
 echo "== TiTiler =="
 curl -fsS "${BASE}/raster/" | head -c 1000
 echo
