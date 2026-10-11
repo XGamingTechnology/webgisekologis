@@ -22,8 +22,7 @@ CREATE TABLE IF NOT EXISTS field.site_observation (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_site_observation_client_id
-ON field.site_observation(client_id)
-WHERE client_id IS NOT NULL;
+ON field.site_observation(client_id);
 
 CREATE INDEX IF NOT EXISTS idx_site_observation_site_id
 ON field.site_observation(site_id);
