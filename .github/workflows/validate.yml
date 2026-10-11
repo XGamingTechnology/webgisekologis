@@ -14,7 +14,9 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check field-mode.js
           node --check config.js
+          node --check sw.js
 
       - name: Check Python syntax
         run: |

@@ -35,3 +35,13 @@ button.primary{background:#111827;color:#fff;border-color:#111827}.danger-light{
 .maplibregl-popup-content{border-radius:12px;padding:12px;box-shadow:0 8px 28px #0002}
 .maplibregl-popup-close-button{font-size:20px;padding:2px 7px}
 .save-status{display:block;margin-top:6px}
+
+.header-actions{display:flex;gap:8px;align-items:center}
+.stats3{grid-template-columns:repeat(3,1fr)}
+.badge{font-size:11px;border-radius:999px;padding:5px 8px;background:#374151;color:#fff}
+.badge.online{background:#166534}.badge.offline{background:#991b1b}
+.progress-track{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-bottom:9px}
+.progress-track>div{height:100%;width:0;background:#16a34a;transition:width .2s}
+.wide{width:100%}.row{display:flex;gap:7px}.row>*{flex:1}
+.field-editor .two{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+input[type=password],input[type=number]{width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:4px}
