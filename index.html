@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <title>WebGIS Survei Habitat & Satwa — Kota Yogyakarta</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="style.css" />
@@ -14,11 +16,23 @@
       <h1>WebGIS Survei Habitat & Satwa</h1>
       <p>Kota Yogyakarta — navigasi, verifikasi akses, dan pencatatan lapangan</p>
     </div>
-    <button id="locateBtn" class="primary">📍 Lokasi saya</button>
+    <div class="header-actions"><span id="onlineBadge" class="badge">…</span><button id="locateBtn" class="primary">📍 Lokasi saya</button></div>
   </header>
 
   <main>
     <aside id="sidebar">
+      <section class="card">
+        <h2>Progress Lapangan</h2>
+        <div class="progress-track"><div id="progressBar"></div></div>
+        <div class="stats stats3">
+          <div><span id="statVisited">–</span><small>Dikunjungi</small></div>
+          <div><span id="statRemaining">–</span><small>Sisa</small></div>
+          <div><span id="statPending">0</span><small>Pending sync</small></div>
+        </div>
+        <button id="syncBtn" class="wide">↻ Sinkronkan data</button>
+        <p id="syncStatus" class="muted">Belum ada sinkronisasi.</p>
+      </section>
+
       <section class="card">
         <h2>Ringkasan</h2>
         <div class="stats">
@@ -76,6 +90,21 @@
       </section>
 
       <section class="card">
+        <h2>Perangkat Surveyor</h2>
+        <label>Nama / inisial default
+          <input id="defaultSurveyor" type="text" placeholder="Contoh: Tim-1 / RR" />
+        </label>
+        <label>Field write token
+          <input id="fieldToken" type="password" placeholder="Diberikan admin" autocomplete="off" />
+        </label>
+        <div class="row">
+          <button id="saveDeviceSettings">Simpan</button>
+          <button id="installBtn" hidden>Install App</button>
+        </div>
+        <p class="muted">Token hanya tersimpan pada browser perangkat ini.</p>
+      </section>
+
+      <section class="card">
         <h2>Catatan lapangan</h2>
         <p class="muted">Saat API tersedia catatan disimpan ke PostGIS. Jika koneksi putus, catatan tetap disimpan lokal sebagai fallback.</p>
         <button id="exportNotes">Export catatan lokal CSV</button>
@@ -97,5 +126,6 @@
   <script src="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="field-mode.js"></script>
 </body>
 </html>
