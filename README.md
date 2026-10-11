@@ -64,8 +64,25 @@ Importer mengenali produk Notebook 06 berikut:
 - `NO_HISTORICAL_RECORD` bukan true absence.
 - perubahan site di lapangan harus terdokumentasi melalui review akses, izin, keselamatan, dan replacement candidate.
 
+## Field mode
+
+Field mode menambahkan progress 30 titik, detection/non-detection, effort survei, GPS accuracy, antrean offline, idempotent sync, dan write token sederhana.
+
+PWA saat ini meng-cache application shell; basemap OSM tetap memerlukan koneksi jaringan.
+
+## Deployment
+
+Lihat docs/VPS_SETUP.md.
+
+~~~bash
+cp .env.example .env
+# edit .env
+bash ops/deploy.sh
+bash ops/smoke-test.sh
+~~~
+
 ## Development
 
-Branch implementasi aktif: `feat/vps-maplibre-stack`.
+Production baseline sudah berada di main; pengembangan field/PWA dilakukan melalui feature branch dan PR.
 
 Frontend mencoba API/PostGIS terlebih dahulu. Jika backend belum aktif, aplikasi tetap dapat membuka `data/sites.geojson` dan layer GeoJSON fallback.
